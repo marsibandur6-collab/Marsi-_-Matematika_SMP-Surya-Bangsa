@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<html lang="id" class="h-full scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan Angkasa: Kubus & Balok - Media Pembelajaran SMP</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js CDN for 3D Geometry Visualizer -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Google Fonts: Fredoka & Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cosmic: {
+                            dark: '#0B0F29',
+                            card: '#161B40',
+                            accent: '#F59E0B',
+                            purple: '#8B5CF6',
+                            cyan: '#06B6D4',
+                            pink: '#EC4899',
+                            glow: '#3B82F6'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Fredoka', 'Poppins', 'sans-serif'],
+                        body: ['Poppins', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Space & Bounce Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(3deg); }
+        }
+        @keyframes orbit {
+            from { transform: rotate(0deg) translateX(50px) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(50px) rotate(-360deg); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.8); }
+        }
+        @keyframes starTwinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .animate-float { animation: float 4s ease-in-out infinite; }
+        .animate-orbit { animation: orbit 12s linear infinite; }
+        .animate-pulse-glow { animation: pulseGlow 2s infinite; }
+        .star-bg {
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 40px 70px, #ffd700, rgba(0,0,0,0)),
+                radial-gradient(1px 1px at 90px 40px, #ffffff, rgba(0,0,0,0)),
+                radial-gradient(2px 2px at 160px 120px, #a855f7, rgba(0,0,0,0));
+            background-repeat: repeat;
+            background-size: 200px 200px;
+        }
+
+        /* Glassmorphism card effects */
+        .glass-card {
+            background: rgba(22, 27, 64, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0F29;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8B5CF6;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #F59E0B;
+        }
+
+        /* Drag & Drop visual styling */
+        .dragging {
+            opacity: 0.5;
+            scale: 1.05;
+        }
+        .drag-over {
+            border-color: #F59E0B !important;
+            background-color: rgba(245, 158, 11, 0.15) !important;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-950 via-indigo-950 to-purple-950 text-white min-h-screen flex flex-col font-sans star-bg selection:bg-amber-400 selection:text-slate-900">
+
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-50 glass-card border-b border-indigo-500/30 shadow-lg shadow-purple-950/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Brand Title -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('home')">
+                    <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 to-purple-600 flex items-center justify-center shadow-lg transform hover:rotate-12 transition-transform">
+                        <i class="fa-solid fa-cube text-slate-950 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-wider bg-gradient-to-r from-amber-300 via-pink-400 to-purple-300 bg-clip-text text-transparent">
+                            KOSMO MATH
+                        </h1>
+                        <p class="text-xs text-amber-300/80 font-medium">Kubus & Balok • SMP Kelas 9</p>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden md:flex space-x-1 lg:space-x-2">
+                    <button onclick="switchTab('home')" id="nav-home" class="nav-btn px-4 py-2.5 rounded-xl font-medium text-sm flex items-center space-x-2 transition-all">
+                        <i class="fa-solid fa-rocket text-amber-400"></i>
+                        <span>Home</span>
+                    </button>
+                    <button onclick="switchTab('tujuan')" id="nav-tujuan" class="nav-btn px-4 py-2.5 rounded-xl font-medium text-sm flex items-center space-x-2 transition-all">
+                        <i class="fa-solid fa-bullseye text-cyan-400"></i>
+                        <span>Tujuan</span>
+                    </button>
+                    <button onclick="switchTab('materi')" id="nav-materi" class="nav-btn px-4 py-2.5 rounded-xl font-medium text-sm flex items-center space-x-2 transition-all">
+                        <i class="fa-solid fa-book-open text-purple-400"></i>
+                        <span>Materi</span>
+                    </button>
+                    <button onclick="switchTab('kuis')" id="nav-kuis" class="nav-btn px-4 py-2.5 rounded-xl font-medium text-sm flex items-center space-x-2 transition-all">
+                        <i class="fa-solid fa-gamepad text-emerald-400"></i>
+                        <span>Kuis Interaktif</span>
+                    </button>
+                    <button onclick="switchTab('dragdrop')" id="nav-dragdrop" class="nav-btn px-4 py-2.5 rounded-xl font-medium text-sm flex items-center space-x-2 transition-all">
+                        <i class="fa-solid fa-hand-pointer text-pink-400"></i>
+                        <span>Drag & Drop</span>
+                    </button>
+                    <button onclick="switchTab('tentang')" id="nav-tentang" class="nav-btn px-4 py-2.5 rounded-xl font-medium text-sm flex items-center space-x-2 transition-all">
+                        <i class="fa-solid fa-user-astronaut text-indigo-400"></i>
+                        <span>Tentang</span>
+                    </button>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="p-2.5 rounded-xl bg-indigo-900/50 text-amber-400 hover:bg-indigo-800 focus:outline-none border border-indigo-500/30">
+                        <i class="fa-solid fa-bars text-xl" id="menu-icon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu -->
+        <div id="mobile-menu" class="hidden md:hidden glass-card border-t border-indigo-500/30 px-4 pt-2 pb-4 space-y-2">
+            <button onclick="switchTab('home')" class="w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 text-amber-300 hover:bg-indigo-900/50">
+                <i class="fa-solid fa-rocket text-amber-400"></i><span>Home</span>
+            </button>
+            <button onclick="switchTab('tujuan')" class="w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 text-cyan-300 hover:bg-indigo-900/50">
+                <i class="fa-solid fa-bullseye text-cyan-400"></i><span>Tujuan Pembelajaran</span>
+            </button>
+            <button onclick="switchTab('materi')" class="w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 text-purple-300 hover:bg-indigo-900/50">
+                <i class="fa-solid fa-book-open text-purple-400"></i><span>Materi Pembelajaran</span>
+            </button>
+            <button onclick="switchTab('kuis')" class="w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 text-emerald-300 hover:bg-indigo-900/50">
+                <i class="fa-solid fa-gamepad text-emerald-400"></i><span>Kuis Interaktif</span>
+            </button>
+            <button onclick="switchTab('dragdrop')" class="w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 text-pink-300 hover:bg-indigo-900/50">
+                <i class="fa-solid fa-hand-pointer text-pink-400"></i><span>Drag and Drop</span>
+            </button>
+            <button onclick="switchTab('tentang')" class="w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 text-indigo-300 hover:bg-indigo-900/50">
+                <i class="fa-solid fa-user-astronaut text-indigo-400"></i><span>Tentang Pengembang</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- SECTION 1: HOME (Beranda) -->
+        <section id="section-home" class="tab-content block space-y-10">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center min-h-[75vh]">
+                <div class="space-y-6 text-center lg:text-left">
+                    <div class="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-indigo-900/60 border border-amber-400/40 text-amber-300 text-sm font-semibold shadow-inner">
+                        <i class="fa-solid fa-sparkles text-amber-400 animate-pulse"></i>
+                        <span>Media Pembelajaran Matematika SMP Kelas 9</span>
+                    </div>
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+                        Jelajahi Rahasia <br>
+                        <span class="bg-gradient-to-r from-amber-400 via-pink-400 to-cyan-400 bg-clip-text text-transparent">
+                            Kubus & Balok
+                        </span> <br>
+                        di Luar Angkasa! 🚀
+                    </h1>
+                    <p class="text-lg text-indigo-200/90 leading-relaxed max-w-xl mx-auto lg:mx-0 font-body">
+                        Selamat datang, Astronot Muda! Mari menjelajahi dimensi bangun ruang 3D melalui visualisasi 3D interaktif, kuis luar angkasa, dan tantangan mencocokkan rumus yang seru.
+                    </p>
+                    <div class="flex flex-wrap gap-4 justify-center lg:justify-start pt-4">
+                        <button onclick="switchTab('materi')" class="px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-lg shadow-lg shadow-amber-500/30 transform hover:-translate-y-1 transition-all flex items-center space-x-3">
+                            <i class="fa-solid fa-shuttle-space text-xl"></i>
+                            <span>Mulai Petualangan</span>
+                        </button>
+                        <button onclick="switchTab('kuis')" class="px-8 py-4 rounded-2xl glass-card hover:bg-indigo-900/60 text-cyan-300 font-bold text-lg border border-cyan-400/40 shadow-lg transform hover:-translate-y-1 transition-all flex items-center space-x-3">
+                            <i class="fa-solid fa-trophy text-amber-400"></i>
+                            <span>Uji Kemampuan</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Cosmic Animated Hero Graphic -->
+                <div class="relative flex justify-center items-center">
+                    <div class="absolute w-72 h-72 sm:w-96 sm:h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse"></div>
+                    <div class="relative z-10 animate-float flex flex-col items-center">
+                        <div class="w-64 h-64 sm:w-80 sm:h-80 rounded-3xl glass-card border-2 border-amber-400/40 p-6 shadow-2xl flex flex-col items-center justify-center text-center relative overflow-hidden group">
+                            <!-- Orbiting decorative icon -->
+                            <div class="absolute -top-4 -right-4 w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center text-slate-950 text-2xl font-bold shadow-lg">
+                                <i class="fa-solid fa-star"></i>
+                            </div>
+                            <i class="fa-solid fa-cubes-stacked text-8xl text-amber-400 mb-4 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] transition-transform group-hover:scale-110"></i>
+                            <h3 class="text-2xl font-bold text-white">Kubus vs Balok</h3>
+                            <p class="text-xs text-indigo-300 mt-2">Visualisasi 3D & Simulator Interaktif</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Features Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10">
+                <div onclick="switchTab('materi')" class="glass-card p-6 rounded-2xl border border-indigo-500/30 hover:border-amber-400/60 transition-all cursor-pointer group hover:-translate-y-2">
+                    <div class="w-14 h-14 rounded-2xl bg-amber-400/20 text-amber-400 flex items-center justify-center text-2xl mb-4 group-hover:bg-amber-400 group-hover:text-slate-950 transition-colors">
+                        <i class="fa-solid fa-cube"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Materi Interaktif 3D</h3>
+                    <p class="text-sm text-indigo-200/80 font-body">Pelajari titik sudut, rusuk, luas permukaan, dan volume secara langsung dengan visualisasi 3D.</p>
+                </div>
+                <div onclick="switchTab('kuis')" class="glass-card p-6 rounded-2xl border border-indigo-500/30 hover:border-emerald-400/60 transition-all cursor-pointer group hover:-translate-y-2">
+                    <div class="w-14 h-14 rounded-2xl bg-emerald-400/20 text-emerald-400 flex items-center justify-center text-2xl mb-4 group-hover:bg-emerald-400 group-hover:text-slate-950 transition-colors">
+                        <i class="fa-solid fa-gamepad"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Kuis Luar Angkasa</h3>
+                    <p class="text-sm text-indigo-200/80 font-body">Kumpulkan bintang, raih skor tertinggi, dan dapatkan lencana Astronot Matematika!</p>
+                </div>
+                <div onclick="switchTab('dragdrop')" class="glass-card p-6 rounded-2xl border border-indigo-500/30 hover:border-pink-400/60 transition-all cursor-pointer group hover:-translate-y-2">
+                    <div class="w-14 h-14 rounded-2xl bg-pink-400/20 text-pink-400 flex items-center justify-center text-2xl mb-4 group-hover:bg-pink-400 group-hover:text-slate-950 transition-colors">
+                        <i class="fa-solid fa-puzzle-piece"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-2">Misi Drag & Drop</h3>
+                    <p class="text-sm text-indigo-200/80 font-body">Pencocokan interaktif rumus dan sifat bangun ruang ke dalam zona planet yang tepat.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: TUJUAN PEMBELAJARAN -->
+        <section id="section-tujuan" class="tab-content hidden space-y-8 animate-fade-in">
+            <div class="text-center space-y-3">
+                <div class="inline-block px-4 py-1.5 rounded-full bg-cyan-900/50 border border-cyan-400/30 text-cyan-300 text-xs font-bold tracking-widest uppercase">
+                    Misi Pembelajaran
+                </div>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Tujuan Pembelajaran Astronot</h2>
+                <p class="text-indigo-200 max-w-2xl mx-auto text-sm sm:text-base font-body">Target kompetensi yang akan dicapai oleh siswa kelas 9 SMP dalam petualangan ini:</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                <div class="glass-card p-6 rounded-3xl border border-indigo-500/30 flex items-start space-x-5 hover:border-cyan-400/50 transition-all">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex-shrink-0 flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg">
+                        1
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-xl font-bold text-cyan-300">Memahami Unsur Bangun Ruang</h3>
+                        <p class="text-sm text-indigo-100/80 font-body leading-relaxed">
+                            Siswa mampu mengidentifikasi dan menjelaskan unsur-unsur Kubus dan Balok meliputi **titik sudut, rusuk, bidang/sisi, diagonal bidang, dan diagonal ruang** secara tepat.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-3xl border border-indigo-500/30 flex items-start space-x-5 hover:border-amber-400/50 transition-all">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex-shrink-0 flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg">
+                        2
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-xl font-bold text-amber-300">Menghitung Luas Permukaan</h3>
+                        <p class="text-sm text-indigo-100/80 font-body leading-relaxed">
+                            Siswa mampu merumuskan dan mengalkulasi **Luas Permukaan Kubus ($L = 6s^2$)** dan **Balok ($L = 2(pl + pt + lt)$)** dalam berbagai konteks soal.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-3xl border border-indigo-500/30 flex items-start space-x-5 hover:border-purple-400/50 transition-all">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-purple-500 to-pink-500 flex-shrink-0 flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg">
+                        3
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-xl font-bold text-purple-300">Menghitung Volume Space</h3>
+                        <p class="text-sm text-indigo-100/80 font-body leading-relaxed">
+                            Siswa mampu menghitung **Volume Kubus ($V = s^3$)** dan **Volume Balok ($V = p \times l \times t$)** dengan benar dan teliti.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-3xl border border-indigo-500/30 flex items-start space-x-5 hover:border-emerald-400/50 transition-all">
+                    <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-400 to-teal-500 flex-shrink-0 flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg">
+                        4
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-xl font-bold text-emerald-300">Pemecahan Masalah Nyata</h3>
+                        <p class="text-sm text-indigo-100/80 font-body leading-relaxed">
+                            Siswa mampu menerapkan konsep Kubus dan Balok untuk menyelesaikan masalah kehidupan sehari-hari (seperti kotak kargo antariksa, akuarium, dan ruangan).
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Motivation Box -->
+            <div class="glass-card p-6 rounded-3xl border border-amber-400/40 text-center max-w-3xl mx-auto bg-gradient-to-r from-purple-900/40 to-indigo-900/40">
+                <i class="fa-solid fa-meteor text-4xl text-amber-400 mb-3 animate-bounce"></i>
+                <h4 class="text-lg font-bold text-amber-300">Pesan Pengembang:</h4>
+                <p class="text-sm text-indigo-100 italic font-body">
+                    "Matematika adalah bahasa alam semesta. Kuasai konsep dasar ini untuk menjadi penjelajah sains yang hebat di masa depan!" — Pak Marsi Bandur
+                </p>
+            </div>
+        </section>
+
+        <!-- SECTION 3: MATERI PEMBELAJARAN INTERAKTIF -->
+        <section id="section-materi" class="tab-content hidden space-y-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-white">Materi Interaktif Bangun Ruang</h2>
+                    <p class="text-sm text-indigo-200 font-body">Pilih bangun ruang di bawah dan simulasikan ukurannya secara langsung!</p>
+                </div>
+                <!-- Shape Switcher Buttons -->
+                <div class="flex bg-indigo-950/80 p-1.5 rounded-2xl border border-indigo-500/40">
+                    <button id="btn-shape-kubus" onclick="selectMateriShape('kubus')" class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all bg-amber-400 text-slate-950 shadow-md">
+                        <i class="fa-solid fa-cube mr-2"></i>Kubus
+                    </button>
+                    <button id="btn-shape-balok" onclick="selectMateriShape('balok')" class="px-6 py-2.5 rounded-xl font-bold text-sm transition-all text-indigo-300 hover:text-white">
+                        <i class="fa-solid fa-cubes mr-2"></i>Balok
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3D Simulator & Formula Explorer Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Left: 3D Render Canvas Box -->
+                <div class="lg:col-span-6 glass-card p-6 rounded-3xl border border-indigo-500/30 flex flex-col items-center justify-between relative overflow-hidden">
+                    <div class="w-full flex justify-between items-center mb-2">
+                        <span id="canvas-shape-title" class="text-lg font-bold text-amber-300 flex items-center">
+                            <i class="fa-solid fa-orbit mr-2 text-cyan-400"></i> Model 3D Kubus
+                        </span>
+                        <span class="text-xs text-indigo-300 bg-indigo-900/60 px-3 py-1 rounded-full border border-indigo-500/30">
+                            Rotasi Otomatis
+                        </span>
+                    </div>
+
+                    <!-- Three.js Canvas Container -->
+                    <div id="three-container" class="w-full h-64 sm:h-80 rounded-2xl bg-slate-950/70 border border-purple-500/30 relative flex items-center justify-center my-2">
+                        <!-- Canvas will be injected here by Three.js script -->
+                    </div>
+
+                    <!-- Interactive Slider Controls -->
+                    <div class="w-full space-y-4 pt-4 border-t border-indigo-500/20" id="controls-kubus">
+                        <div>
+                            <div class="flex justify-between text-sm font-semibold text-indigo-200 mb-1">
+                                <span>Panjang Sisi (s):</span>
+                                <span id="val-side" class="text-amber-400 font-bold">5 cm</span>
+                            </div>
+                            <input type="range" id="slider-side" min="2" max="10" value="5" step="1" oninput="update3DModel()" class="w-full accent-amber-400 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <div class="w-full space-y-4 pt-4 border-t border-indigo-500/20 hidden" id="controls-balok">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold text-indigo-200 mb-1">
+                                    <span>Panjang (p):</span>
+                                    <span id="val-p" class="text-cyan-400 font-bold">6 cm</span>
+                                </div>
+                                <input type="range" id="slider-p" min="2" max="10" value="6" step="1" oninput="update3DModel()" class="w-full accent-cyan-400 cursor-pointer">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold text-indigo-200 mb-1">
+                                    <span>Lebar (l):</span>
+                                    <span id="val-l" class="text-purple-400 font-bold">4 cm</span>
+                                </div>
+                                <input type="range" id="slider-l" min="2" max="10" value="4" step="1" oninput="update3DModel()" class="w-full accent-purple-400 cursor-pointer">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-semibold text-indigo-200 mb-1">
+                                    <span>Tinggi (t):</span>
+                                    <span id="val-t" class="text-pink-400 font-bold">3 cm</span>
+                                </div>
+                                <input type="range" id="slider-t" min="2" max="10" value="3" step="1" oninput="update3DModel()" class="w-full accent-pink-400 cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Calculations & Formula Explanation -->
+                <div class="lg:col-span-6 space-y-6">
+                    <!-- Live Dynamic Calculation Card -->
+                    <div class="glass-card p-6 rounded-3xl border border-amber-400/40 bg-gradient-to-br from-indigo-900/60 to-purple-900/60 shadow-xl">
+                        <h3 class="text-lg font-bold text-amber-300 mb-4 flex items-center">
+                            <i class="fa-solid fa-calculator text-amber-400 mr-2"></i> Hasil Perhitungan Otomatis
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-slate-950/60 p-4 rounded-2xl border border-indigo-500/30 text-center">
+                                <span class="text-xs text-indigo-300 font-medium uppercase tracking-wider">Luas Permukaan</span>
+                                <div id="calc-surface-area" class="text-2xl sm:text-3xl font-black text-amber-400 mt-1">150 cm²</div>
+                                <span id="calc-surface-formula" class="text-[11px] text-indigo-200 block mt-1 font-mono">6 × (5²)</span>
+                            </div>
+                            <div class="bg-slate-950/60 p-4 rounded-2xl border border-indigo-500/30 text-center">
+                                <span class="text-xs text-indigo-300 font-medium uppercase tracking-wider">Volume Ruang</span>
+                                <div id="calc-volume" class="text-2xl sm:text-3xl font-black text-cyan-400 mt-1">125 cm³</div>
+                                <span id="calc-volume-formula" class="text-[11px] text-indigo-200 block mt-1 font-mono">5³</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Theoretical Properties Breakdown -->
+                    <div class="glass-card p-6 rounded-3xl border border-indigo-500/30 space-y-4">
+                        <h3 id="materi-props-title" class="text-xl font-bold text-white flex items-center">
+                            <i class="fa-solid fa-atom text-purple-400 mr-2"></i> Sifat & Unsur-Unsur Kubus
+                        </h3>
+                        <ul id="materi-props-list" class="space-y-2.5 text-sm text-indigo-100 font-body">
+                            <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Sisi/Bidang:</strong> Memiliki 6 sisi berbentuk persegi yang kongruen (sama besar).</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Rusuk:</strong> Memiliki 12 rusuk yang sama panjang.</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Titik Sudut:</strong> Memiliki 8 titik sudut siku-siku (90°).</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Diagonal Bidang:</strong> 12 diagonal bidang ($s\sqrt{2}$).</span></li>
+                            <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Diagonal Ruang:</strong> 4 diagonal ruang ($s\sqrt{3}$).</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: KUIS INTERAKTIF LUAR ANGKASA -->
+        <section id="section-kuis" class="tab-content hidden space-y-8">
+            <!-- Quiz Header -->
+            <div class="glass-card p-6 rounded-3xl border border-indigo-500/30 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white flex items-center">
+                        <i class="fa-solid fa-trophy text-amber-400 mr-3 animate-bounce"></i> Kuis Kosmik Bangun Ruang
+                    </h2>
+                    <p class="text-sm text-indigo-200 font-body">Jawab 5 soal petualangan berikut dan raih bintang terbanyak!</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="bg-indigo-950/80 px-4 py-2 rounded-2xl border border-amber-400/30 text-center">
+                        <span class="text-xs text-indigo-300 block">Skor Kamu</span>
+                        <span id="quiz-score-display" class="text-xl font-black text-amber-400">0</span>
+                    </div>
+                    <div class="bg-indigo-950/80 px-4 py-2 rounded-2xl border border-cyan-400/30 text-center">
+                        <span class="text-xs text-indigo-300 block">Progres Soal</span>
+                        <span id="quiz-progress-display" class="text-xl font-black text-cyan-400">1 / 5</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Card Box -->
+            <div id="quiz-box" class="glass-card p-6 sm:p-10 rounded-3xl border border-purple-500/40 max-w-3xl mx-auto shadow-2xl relative">
+                <!-- Question Title -->
+                <div class="space-y-4">
+                    <span id="quiz-category-tag" class="inline-block px-3 py-1 rounded-full bg-purple-900/60 border border-purple-400/30 text-purple-300 text-xs font-bold">
+                        Soal #1 • Kubus
+                    </span>
+                    <h3 id="quiz-question-text" class="text-lg sm:text-2xl font-bold text-white leading-relaxed">
+                        Sebuah kubus memiliki panjang rusuk 6 cm. Berapakah volume kubus tersebut?
+                    </h3>
+                </div>
+
+                <!-- Answer Choices -->
+                <div id="quiz-options-container" class="grid grid-cols-1 gap-4 mt-8">
+                    <!-- Options injected via JavaScript -->
+                </div>
+
+                <!-- Next / Feedback Controls -->
+                <div id="quiz-feedback" class="mt-6 p-4 rounded-2xl hidden transition-all font-body text-sm font-semibold">
+                    <!-- Feedback message injected here -->
+                </div>
+
+                <div class="mt-8 flex justify-end">
+                    <button id="btn-next-question" onclick="nextQuestion()" class="hidden px-8 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-base shadow-lg transition-all flex items-center space-x-2">
+                        <span>Soal Berikutnya</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz Result Modal Summary (Hidden by default) -->
+            <div id="quiz-result-card" class="glass-card p-8 sm:p-12 rounded-3xl border-2 border-amber-400 max-w-2xl mx-auto text-center space-y-6 hidden shadow-2xl">
+                <div class="w-24 h-24 mx-auto rounded-full bg-amber-400/20 text-amber-400 flex items-center justify-center text-5xl shadow-inner animate-pulse">
+                    <i class="fa-solid fa-crown"></i>
+                </div>
+                <h3 class="text-3xl font-black text-white">Misi Selesai, Astronot!</h3>
+                <p id="quiz-final-message" class="text-indigo-200 text-base font-body">Kamu telah menyelesaikan seluruh soal tantangan.</p>
+                
+                <div class="flex justify-center space-x-2 text-3xl text-amber-400 my-2" id="quiz-stars-container">
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                    <i class="fa-solid fa-star"></i>
+                </div>
+
+                <div class="bg-slate-950/60 p-6 rounded-2xl border border-indigo-500/30 max-w-sm mx-auto">
+                    <span class="text-sm text-indigo-300">Total Skor Akhir</span>
+                    <div id="quiz-final-score" class="text-4xl font-black text-amber-400 mt-1">100 / 100</div>
+                </div>
+
+                <button onclick="resetQuiz()" class="px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-bold text-lg shadow-lg transition-all">
+                    <i class="fa-solid fa-rotate-right mr-2"></i>Coba Lagi
+                </button>
+            </div>
+        </section>
+
+        <!-- SECTION 5: DRAG AND DROP MATCHING GAME -->
+        <section id="section-dragdrop" class="tab-content hidden space-y-8">
+            <div class="text-center space-y-2">
+                <span class="px-4 py-1.5 rounded-full bg-pink-900/50 border border-pink-400/30 text-pink-300 text-xs font-bold tracking-widest uppercase">
+                    Game Pencocokan Kosmik
+                </span>
+                <h2 class="text-3xl font-extrabold text-white">Misi Drag & Drop Sifat & Rumus</h2>
+                <p class="text-sm text-indigo-200 max-w-2xl mx-auto font-body">
+                    Tarik (drag) kartu rumus atau sifat di bawah ini, lalu jatuhkan (drop) ke planet tujuan yang sesuai!
+                </p>
+            </div>
+
+            <!-- Draggable Items Palette -->
+            <div class="glass-card p-6 rounded-3xl border border-indigo-500/30 space-y-3">
+                <h3 class="text-sm font-bold text-amber-300 uppercase tracking-wider flex items-center">
+                    <i class="fa-solid fa-hand-holding text-amber-400 mr-2"></i> Kartu Elemen Kosmik (Geser ke Planet)
+                </h3>
+                <div id="draggable-items-container" class="flex flex-wrap gap-3 min-h-[70px] p-2 rounded-2xl bg-slate-950/50 border border-indigo-500/20">
+                    <!-- Draggable items injected dynamically -->
+                </div>
+            </div>
+
+            <!-- Drop Targets (Planets/Zones) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Planet Kubus Zone -->
+                <div class="glass-card p-6 rounded-3xl border-2 border-amber-400/40 space-y-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between border-b border-indigo-500/30 pb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center text-2xl font-bold">
+                                <i class="fa-solid fa-cube"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-amber-300">Planet Kubus</h3>
+                                <p class="text-xs text-indigo-200">Sisi Persegi Kongruen</p>
+                            </div>
+                        </div>
+                        <span id="score-kubus-zone" class="text-xs text-amber-400 bg-amber-950/60 px-3 py-1 rounded-full border border-amber-400/30 font-bold">0 Item</span>
+                    </div>
+
+                    <div id="drop-zone-kubus" data-target="kubus" class="drop-target min-h-[160px] p-4 rounded-2xl bg-slate-950/60 border-2 border-dashed border-amber-400/30 flex flex-wrap gap-2 items-start transition-all">
+                        <p class="text-xs text-indigo-400 italic w-full text-center my-auto pointer-events-none">Tarik elemen khusus Kubus ke sini...</p>
+                    </div>
+                </div>
+
+                <!-- Planet Balok Zone -->
+                <div class="glass-card p-6 rounded-3xl border-2 border-cyan-400/40 space-y-4 flex flex-col justify-between">
+                    <div class="flex items-center justify-between border-b border-indigo-500/30 pb-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 rounded-2xl bg-cyan-400 text-slate-950 flex items-center justify-center text-2xl font-bold">
+                                <i class="fa-solid fa-cubes"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-cyan-300">Planet Balok</h3>
+                                <p class="text-xs text-indigo-200">Panjang, Lebar, dan Tinggi</p>
+                            </div>
+                        </div>
+                        <span id="score-balok-zone" class="text-xs text-cyan-400 bg-cyan-950/60 px-3 py-1 rounded-full border border-cyan-400/30 font-bold">0 Item</span>
+                    </div>
+
+                    <div id="drop-zone-balok" data-target="balok" class="drop-target min-h-[160px] p-4 rounded-2xl bg-slate-950/60 border-2 border-dashed border-cyan-400/30 flex flex-wrap gap-2 items-start transition-all">
+                        <p class="text-xs text-indigo-400 italic w-full text-center my-auto pointer-events-none">Tarik elemen khusus Balok ke sini...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Reset Button -->
+            <div class="text-center pt-4">
+                <button onclick="initDragDropGame()" class="px-6 py-3 rounded-2xl glass-card hover:bg-indigo-900/60 text-amber-300 border border-amber-400/30 font-bold text-sm transition-all">
+                    <i class="fa-solid fa-arrows-rotate mr-2"></i>Acak & Reset Permainan
+                </button>
+            </div>
+        </section>
+
+        <!-- SECTION 6: TENTANG PENGEMBANG -->
+        <section id="section-tentang" class="tab-content hidden space-y-8">
+            <div class="glass-card p-8 sm:p-12 rounded-3xl border border-indigo-500/30 max-w-4xl mx-auto space-y-8">
+                <!-- Developer Header -->
+                <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6 text-center sm:text-left">
+                    <div class="relative">
+                        <div class="w-32 h-32 rounded-full bg-gradient-to-tr from-amber-400 via-purple-500 to-indigo-600 p-1 shadow-2xl">
+                            <div class="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-5xl text-amber-400">
+                                <i class="fa-solid fa-user-astronaut"></i>
+                            </div>
+                        </div>
+                        <div class="absolute bottom-0 right-0 w-10 h-10 bg-emerald-400 text-slate-950 rounded-full flex items-center justify-center text-lg shadow-lg">
+                            <i class="fa-solid fa-check-double"></i>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <span class="px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold border border-amber-400/30">
+                            Pengembang Media Pembelajaran
+                        </span>
+                        <h2 class="text-3xl font-extrabold text-white">Marsi Bandur</h2>
+                        <p class="text-indigo-200 text-sm font-body">Guru Matematika • SMP Kelas 9</p>
+                    </div>
+                </div>
+
+                <hr class="border-indigo-500/20">
+
+                <!-- Metadata Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 font-body">
+                    <div class="bg-slate-950/50 p-5 rounded-2xl border border-indigo-500/20 space-y-2">
+                        <div class="text-xs text-amber-400 font-bold uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-bullseye mr-2"></i> Target Pengguna
+                        </div>
+                        <p class="text-sm text-indigo-100">Siswa SMP Kelas 9 (Fase D Kurikulum Merdeka / K13)</p>
+                    </div>
+
+                    <div class="bg-slate-950/50 p-5 rounded-2xl border border-indigo-500/20 space-y-2">
+                        <div class="text-xs text-cyan-400 font-bold uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-book-bookmark mr-2"></i> Topik & Materi
+                        </div>
+                        <p class="text-sm text-indigo-100">Bangun Ruang Sisi Datar: Kubus dan Balok</p>
+                    </div>
+
+                    <div class="bg-slate-950/50 p-5 rounded-2xl border border-indigo-500/20 space-y-2">
+                        <div class="text-xs text-purple-400 font-bold uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-laptop-code mr-2"></i> Teknologi Digunakan
+                        </div>
+                        <p class="text-sm text-indigo-100">HTML5, Tailwind CSS, JavaScript (ES6), Three.js, Web Audio API</p>
+                    </div>
+
+                    <div class="bg-slate-950/50 p-5 rounded-2xl border border-indigo-500/20 space-y-2">
+                        <div class="text-xs text-pink-400 font-bold uppercase tracking-wider flex items-center">
+                            <i class="fa-solid fa-palette mr-2"></i> Gaya Visual
+                        </div>
+                        <p class="text-sm text-indigo-100">Tema Luar Angkasa Kosmik, Font Interaktif, Responsif Mobile</p>
+                    </div>
+                </div>
+
+                <!-- Dedicated Message -->
+                <div class="p-6 rounded-2xl bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-purple-500/30 text-center space-y-2">
+                    <h3 class="text-lg font-bold text-amber-300">Komitmen Pembelajaran Interaktif</h3>
+                    <p class="text-xs sm:text-sm text-indigo-200 leading-relaxed font-body">
+                        Website ini dirancang khusus untuk menciptakan pengalaman belajar matematika yang menyenangkan, konseptual, dan bermakna bagi siswa SMP, dengan bantuan visualisasi 3D secara langsung.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass-card mt-12 border-t border-indigo-500/30 py-6 text-center text-xs text-indigo-300 font-body">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-cube text-amber-400"></i>
+                <span>&copy; 2026 Kosmo Math • Dikembangkan oleh <strong>Marsi Bandur</strong></span>
+            </div>
+            <div class="flex space-x-4">
+                <span class="hover:text-amber-400 cursor-pointer" onclick="switchTab('home')">Home</span> •
+                <span class="hover:text-amber-400 cursor-pointer" onclick="switchTab('materi')">Materi</span> •
+                <span class="hover:text-amber-400 cursor-pointer" onclick="switchTab('kuis')">Kuis</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /* ==========================================================================
+           1. NAVIGATION SYSTEM (SPA Tab Switcher)
+           ========================================================================== */
+        function switchTab(tabId) {
+            // Hide all tab content sections
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(el => el.classList.add('hidden'));
+
+            // Remove active style from all navigation buttons
+            const navBtns = document.querySelectorAll('.nav-btn');
+            navBtns.forEach(btn => {
+                btn.classList.remove('bg-amber-400', 'text-slate-950', 'shadow-lg');
+                btn.classList.add('text-indigo-200', 'hover:text-white', 'hover:bg-indigo-900/40');
+            });
+
+            // Show selected tab
+            const targetSection = document.getElementById(`section-${tabId}`);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+
+            // Highlight active desktop menu button
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.remove('text-indigo-200', 'hover:text-white', 'hover:bg-indigo-900/40');
+                activeNav.classList.add('bg-amber-400', 'text-slate-950', 'shadow-lg');
+            }
+
+            // Close mobile menu if open
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.add('hidden');
+            }
+
+            // Trigger Three.js render resize if switching to Materi tab
+            if (tabId === 'materi') {
+                setTimeout(() => {
+                    initThreeJS();
+                    update3DModel();
+                }, 100);
+            }
+
+            // Scroll top smoothly
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            playBeepSound(440, 0.05); // Subtle click audio feedback
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        /* ==========================================================================
+           2. WEB AUDIO API SYNTHESIZER (Sound Effects)
+           ========================================================================== */
+        let audioCtx = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        function playBeepSound(freq, duration) {
+            try {
+                const ctx = getAudioContext();
+                if (ctx.state === 'suspended') {
+                    ctx.resume();
+                }
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {
+                // Audio fallback silence if browser blocks auto-audio
+            }
+        }
+
+        function playSuccessSound() {
+            playBeepSound(523.25, 0.1); // C5
+            setTimeout(() => playBeepSound(659.25, 0.1), 100); // E5
+            setTimeout(() => playBeepSound(783.99, 0.2), 200); // G5
+        }
+
+        function playWrongSound() {
+            playBeepSound(220, 0.15); // A3
+            setTimeout(() => playBeepSound(196, 0.25), 150); // G3
+        }
+
+
+        /* ==========================================================================
+           3. THREE.JS 3D GEOMETRY VISUALIZER
+           ========================================================================== */
+        let scene, camera, renderer, currentMesh, currentShape = 'kubus';
+
+        function initThreeJS() {
+            const container = document.getElementById('three-container');
+            if (!container || container.children.length > 0) return; // Prevent duplicate initialization
+
+            const width = container.clientWidth || 300;
+            const height = container.clientHeight || 250;
+
+            // Scene setup
+            scene = new THREE.Scene();
+
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(12, 10, 14);
+            camera.lookAt(0, 0, 0);
+
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xf59e0b, 1.2);
+            dirLight.position.set(10, 20, 15);
+            scene.add(dirLight);
+
+            // Window resize handler
+            window.addEventListener('resize', () => {
+                if (!container || !renderer || !camera) return;
+                const newW = container.clientWidth;
+                const newH = container.clientHeight;
+                camera.aspect = newW / newH;
+                camera.updateProjectionMatrix();
+                renderer.setSize(newW, newH);
+            });
+
+            // Start animation loop
+            animateThreeJS();
+        }
+
+        function animateThreeJS() {
+            requestAnimationFrame(animateThreeJS);
+            if (currentMesh) {
+                currentMesh.rotation.y += 0.008;
+                currentMesh.rotation.x += 0.003;
+            }
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        }
+
+        function selectMateriShape(shape) {
+            currentShape = shape;
+
+            const btnKubus = document.getElementById('btn-shape-kubus');
+            const btnBalok = document.getElementById('btn-shape-balok');
+            const ctrlKubus = document.getElementById('controls-kubus');
+            const ctrlBalok = document.getElementById('controls-balok');
+            const title = document.getElementById('canvas-shape-title');
+            const propsTitle = document.getElementById('materi-props-title');
+            const propsList = document.getElementById('materi-props-list');
+
+            if (shape === 'kubus') {
+                btnKubus.className = 'px-6 py-2.5 rounded-xl font-bold text-sm transition-all bg-amber-400 text-slate-950 shadow-md';
+                btnBalok.className = 'px-6 py-2.5 rounded-xl font-bold text-sm transition-all text-indigo-300 hover:text-white';
+                ctrlKubus.classList.remove('hidden');
+                ctrlBalok.classList.add('hidden');
+                title.innerHTML = `<i class="fa-solid fa-orbit mr-2 text-amber-400"></i> Model 3D Kubus`;
+                propsTitle.innerHTML = `<i class="fa-solid fa-atom text-amber-400 mr-2"></i> Sifat & Unsur-Unsur Kubus`;
+                
+                propsList.innerHTML = `
+                    <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Sisi/Bidang:</strong> 6 sisi persegi kongruen ($6 \\times s^2$).</span></li>
+                    <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Rusuk:</strong> 12 rusuk sama panjang.</span></li>
+                    <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Titik Sudut:</strong> 8 titik sudut siku-siku.</span></li>
+                    <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Rumus Luas Permukaan:</strong> $L = 6 \\times s^2$</span></li>
+                    <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Rumus Volume:</strong> $V = s \\times s \\times s = s^3$</span></li>
+                `;
+            } else {
+                btnBalok.className = 'px-6 py-2.5 rounded-xl font-bold text-sm transition-all bg-cyan-400 text-slate-950 shadow-md';
+                btnKubus.className = 'px-6 py-2.5 rounded-xl font-bold text-sm transition-all text-indigo-300 hover:text-white';
+                ctrlBalok.classList.remove('hidden');
+                ctrlKubus.classList.add('hidden');
+                title.innerHTML = `<i class="fa-solid fa-orbit mr-2 text-cyan-400"></i> Model 3D Balok`;
+                propsTitle.innerHTML = `<i class="fa-solid fa-atom text-cyan-400 mr-2"></i> Sifat & Unsur-Unsur Balok`;
+                
+                propsList.innerHTML = `
+                    <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Sisi/Bidang:</strong> 6 sisi (3 pasang persegi panjang yang sejajar & sama besar).</span></li>
+                    <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Rusuk:</strong> 12 rusuk terbagi menjadi 3 kelompok (4 p, 4 l, 4 t).</span></li>
+                    <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Titik Sudut:</strong> 8 titik sudut siku-siku.</span></li>
+                    <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Rumus Luas Permukaan:</strong> $L = 2 \\times (p \\cdot l + p \\cdot t + l \\cdot t)$</span></li>
+                    <li class="flex items-start"><i class="fa-solid fa-check text-emerald-400 mt-1 mr-3"></i> <span><strong>Rumus Volume:</strong> $V = p \\times l \\times t$</span></li>
+                `;
+            }
+
+            update3DModel();
+        }
+
+        function update3DModel() {
+            if (!scene) return;
+
+            // Remove existing mesh
+            if (currentMesh) scene.remove(currentMesh);
+
+            let geometry, surfaceArea, volume, surfaceFormula, volumeFormula;
+
+            if (currentShape === 'kubus') {
+                const s = parseFloat(document.getElementById('slider-side').value);
+                document.getElementById('val-side').innerText = `${s} cm`;
+
+                geometry = new THREE.BoxGeometry(s, s, s);
+                surfaceArea = 6 * (s * s);
+                volume = Math.pow(s, 3);
+                surfaceFormula = `6 × (${s}²) = ${surfaceArea}`;
+                volumeFormula = `${s}³ = ${volume}`;
+
+            } else {
+                const p = parseFloat(document.getElementById('slider-p').value);
+                const l = parseFloat(document.getElementById('slider-l').value);
+                const t = parseFloat(document.getElementById('slider-t').value);
+
+                document.getElementById('val-p').innerText = `${p} cm`;
+                document.getElementById('val-l').innerText = `${l} cm`;
+                document.getElementById('val-t').innerText = `${t} cm`;
+
+                geometry = new THREE.BoxGeometry(p, t, l); // THREE.js axes: width(p), height(t), depth(l)
+                surfaceArea = 2 * (p*l + p*t + l*t);
+                volume = p * l * t;
+                surfaceFormula = `2 × (${p}×${l} + ${p}×${t} + ${l}×${t})`;
+                volumeFormula = `${p} × ${l} × ${t}`;
+            }
+
+            // Material with glowing wireframe & transparent body
+            const material = new THREE.MeshPhongMaterial({
+                color: currentShape === 'kubus' ? 0xf59e0b : 0x06b6d4,
+                transparent: true,
+                opacity: 0.75,
+                wireframe: false,
+                shininess: 80
+            });
+
+            currentMesh = new THREE.Mesh(geometry, material);
+
+            // Add wireframe edge highlight
+            const edges = new THREE.EdgesGeometry(geometry);
+            const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+            const wireframe = new THREE.LineSegments(edges, lineMat);
+            currentMesh.add(wireframe);
+
+            scene.add(currentMesh);
+
+            // Update UI calculation results
+            document.getElementById('calc-surface-area').innerText = `${surfaceArea} cm²`;
+            document.getElementById('calc-surface-formula').innerText = surfaceFormula;
+            document.getElementById('calc-volume').innerText = `${volume} cm³`;
+            document.getElementById('calc-volume-formula').innerText = volumeFormula;
+        }
+
+        /* ==========================================================================
+           4. KUIS INTERAKTIF ENGINE
+           ========================================================================== */
+        const quizData = [
+            {
+                category: "Soal #1 • Kubus",
+                question: "Sebuah kubus memiliki panjang rusuk 5 cm. Berapakah volume kubus tersebut?",
+                options: ["100 cm³", "125 cm³", "150 cm³", "625 cm³"],
+                correct: 1,
+                explanation: "Volume Kubus = s³ = 5 × 5 × 5 = 125 cm³."
+            },
+            {
+                category: "Soal #2 • Balok",
+                question: "Sebuah balok memiliki panjang 8 cm, lebar 5 cm, dan tinggi 4 cm. Berapakah volume balok tersebut?",
+                options: ["160 cm³", "120 cm³", "200 cm³", "80 cm³"],
+                correct: 0,
+                explanation: "Volume Balok = p × l × t = 8 × 5 × 4 = 160 cm³."
+            },
+            {
+                category: "Soal #3 • Luas Permukaan",
+                question: "Berapakah luas permukaan kubus jika panjang sisinya 6 cm?",
+                options: ["36 cm²", "144 cm²", "216 cm²", "256 cm²"],
+                correct: 2,
+                explanation: "Luas Permukaan Kubus = 6 × s² = 6 × 6² = 6 × 36 = 216 cm²."
+            },
+            {
+                category: "Soal #4 • Sifat Bangun",
+                question: "Berapakah jumlah titik sudut yang dimiliki oleh sebuah balok?",
+                options: ["6", "8", "12", "16"],
+                correct: 1,
+                explanation: "Balok maupun Kubus sama-sama memiliki 8 titik sudut."
+            },
+            {
+                category: "Soal #5 • Luas Permukaan Balok",
+                question: "Diketahui balok p = 4 cm, l = 3 cm, t = 2 cm. Luas permukaan balok tersebut adalah...",
+                options: ["24 cm²", "52 cm²", "48 cm²", "26 cm²"],
+                correct: 1,
+                explanation: "L = 2(pl + pt + lt) = 2(4×3 + 4×2 + 3×2) = 2(12 + 8 + 6) = 2(26) = 52 cm²."
+            }
+        ];
+
+        let currentQuestionIdx = 0;
+        let quizScore = 0;
+        let answerSelected = false;
+
+        function loadQuestion() {
+            answerSelected = false;
+            const q = quizData[currentQuestionIdx];
+
+            document.getElementById('quiz-category-tag').innerText = q.category;
+            document.getElementById('quiz-question-text').innerText = q.question;
+            document.getElementById('quiz-progress-display').innerText = `${currentQuestionIdx + 1} / ${quizData.length}`;
+
+            const optionsContainer = document.getElementById('quiz-options-container');
+            optionsContainer.innerHTML = '';
+
+            const feedbackEl = document.getElementById('quiz-feedback');
+            feedbackEl.classList.add('hidden');
+
+            const nextBtn = document.getElementById('btn-next-question');
+            nextBtn.classList.add('hidden');
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `option-btn w-full text-left p-4 rounded-2xl border border-indigo-500/30 bg-slate-950/60 hover:bg-indigo-900/50 hover:border-amber-400/50 transition-all flex items-center justify-between font-body text-indigo-100 font-medium`;
+                btn.onclick = () => selectAnswer(idx);
+                btn.innerHTML = `
+                    <span class="flex items-center">
+                        <span class="w-8 h-8 rounded-xl bg-indigo-900/80 text-amber-300 flex items-center justify-center font-bold text-sm mr-3 border border-indigo-500/30">
+                            ${String.fromCharCode(65 + idx)}
+                        </span>
+                        ${opt}
+                    </span>
+                    <i class="fa-regular fa-circle text-indigo-400 text-lg icon-indicator"></i>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(optIdx) {
+            if (answerSelected) return;
+            answerSelected = true;
+
+            const q = quizData[currentQuestionIdx];
+            const optionBtns = document.querySelectorAll('.option-btn');
+            const feedbackEl = document.getElementById('quiz-feedback');
+            const nextBtn = document.getElementById('btn-next-question');
+
+            if (optIdx === q.correct) {
+                quizScore += 20;
+                playSuccessSound();
+                optionBtns[optIdx].className = 'option-btn w-full text-left p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-950/60 text-white font-bold transition-all flex items-center justify-between';
+                optionBtns[optIdx].querySelector('.icon-indicator').className = 'fa-solid fa-circle-check text-emerald-400 text-xl';
+                
+                feedbackEl.className = 'mt-6 p-4 rounded-2xl bg-emerald-950/80 border border-emerald-400/50 text-emerald-200 font-body text-sm';
+                feedbackEl.innerHTML = `<i class="fa-solid fa-sparkles mr-2 text-amber-400"></i><strong>Benar Sekali!</strong> ${q.explanation}`;
+            } else {
+                playWrongSound();
+                optionBtns[optIdx].className = 'option-btn w-full text-left p-4 rounded-2xl border-2 border-pink-500 bg-pink-950/60 text-white transition-all flex items-center justify-between';
+                optionBtns[optIdx].querySelector('.icon-indicator').className = 'fa-solid fa-circle-xmark text-pink-400 text-xl';
+
+                // Highlight correct option
+                optionBtns[q.correct].className = 'option-btn w-full text-left p-4 rounded-2xl border-2 border-emerald-400 bg-emerald-950/40 text-emerald-200 transition-all flex items-center justify-between';
+
+                feedbackEl.className = 'mt-6 p-4 rounded-2xl bg-pink-950/80 border border-pink-500/50 text-pink-200 font-body text-sm';
+                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-info mr-2 text-pink-400"></i><strong>Kurang Tepat.</strong> ${q.explanation}`;
+            }
+
+            document.getElementById('quiz-score-display').innerText = quizScore;
+            feedbackEl.classList.remove('hidden');
+            nextBtn.classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestionIdx++;
+            if (currentQuestionIdx < quizData.length) {
+                loadQuestion();
+            } else {
+                showQuizResult();
+            }
+        }
+
+        function showQuizResult() {
+            document.getElementById('quiz-box').classList.add('hidden');
+            const resultCard = document.getElementById('quiz-result-card');
+            resultCard.classList.remove('hidden');
+
+            document.getElementById('quiz-final-score').innerText = `${quizScore} / 100`;
+
+            const msgEl = document.getElementById('quiz-final-message');
+            if (quizScore === 100) {
+                msgEl.innerText = "Luar biasa! Kamu adalah Kapten Astronot Matematika Sejati! 🌟";
+            } else if (quizScore >= 60) {
+                msgEl.innerText = "Kerja bagus! Kamu sudah memahami konsep dasar Kubus dan Balok!";
+            } else {
+                msgEl.innerText = "Tetap semangat! Pelajari kembali materi 3D dan coba lagi ya!";
+            }
+        }
+
+        function resetQuiz() {
+            currentQuestionIdx = 0;
+            quizScore = 0;
+            document.getElementById('quiz-score-display').innerText = '0';
+            document.getElementById('quiz-result-card').classList.add('hidden');
+            document.getElementById('quiz-box').classList.remove('hidden');
+            loadQuestion();
+        }
+
+
+        /* ==========================================================================
+           5. DRAG & DROP GAME MECHANICS (Desktop & Touch Support)
+           ========================================================================== */
+        const dragItemsData = [
+            { id: 'item-1', text: 'V = s³', type: 'kubus' },
+            { id: 'item-2', text: 'V = p × l × t', type: 'balok' },
+            { id: 'item-3', text: 'L = 6 × s²', type: 'kubus' },
+            { id: 'item-4', text: 'L = 2(pl + pt + lt)', type: 'balok' },
+            { id: 'item-5', text: '6 Sisi Persegi Kongruen', type: 'kubus' },
+            { id: 'item-6', text: 'Rusuk Terbagi (p, l, t)', type: 'balok' }
+        ];
+
+        let draggedElement = null;
+
+        function initDragDropGame() {
+            const container = document.getElementById('draggable-items-container');
+            const zoneKubus = document.getElementById('drop-zone-kubus');
+            const zoneBalok = document.getElementById('drop-zone-balok');
+
+            container.innerHTML = '';
+            zoneKubus.innerHTML = '<p class="text-xs text-indigo-400 italic w-full text-center my-auto pointer-events-none">Tarik elemen khusus Kubus ke sini...</p>';
+            zoneBalok.innerHTML = '<p class="text-xs text-indigo-400 italic w-full text-center my-auto pointer-events-none">Tarik elemen khusus Balok ke sini...</p>';
+
+            document.getElementById('score-kubus-zone').innerText = '0 Item';
+            document.getElementById('score-balok-zone').innerText = '0 Item';
+
+            // Shuffle array
+            const shuffled = [...dragItemsData].sort(() => Math.random() - 0.5);
+
+            shuffled.forEach(item => {
+                const el = document.createElement('div');
+                el.id = item.id;
+                el.dataset.type = item.type;
+                el.draggable = true;
+                el.className = 'draggable-item px-4 py-2.5 rounded-xl bg-indigo-900/80 border border-indigo-400/40 text-amber-300 text-xs sm:text-sm font-bold shadow-md cursor-grab active:cursor-grabbing hover:bg-indigo-800 transition-transform';
+                el.innerText = item.text;
+
+                // Mouse Drag Events
+                el.addEventListener('dragstart', handleDragStart);
+                el.addEventListener('dragend', handleDragEnd);
+
+                // Touch Events for Mobile / Tablet
+                el.addEventListener('touchstart', handleTouchStart, { passive: false });
+                el.addEventListener('touchmove', handleTouchMove, { passive: false });
+                el.addEventListener('touchend', handleTouchEnd);
+
+                container.appendChild(el);
+            });
+
+            // Set up Drop Zones
+            [zoneKubus, zoneBalok].forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('dragleave', handleDragLeave);
+                zone.addEventListener('drop', handleDrop);
+            });
+        }
+
+        // Drag & Drop Handlers
+        function handleDragStart(e) {
+            draggedElement = this;
+            this.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', this.id);
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            draggedElement = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave() {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+            if (!draggedElement) return;
+
+            processDrop(draggedElement, this);
+        }
+
+        function processDrop(element, targetZone) {
+            const itemType = element.dataset.type;
+            const targetType = targetZone.dataset.target;
+
+            if (itemType === targetType) {
+                playSuccessSound();
+                
+                // Remove placeholder text if present
+                const placeholder = targetZone.querySelector('p');
+                if (placeholder) placeholder.remove();
+
+                // Style dropped item
+                element.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-400/50 shadow-sm';
+                element.draggable = false;
+
+                targetZone.appendChild(element);
+                updateZoneScores();
+            } else {
+                playWrongSound();
+                // Visual shake feedback
+                element.classList.add('animate-bounce');
+                setTimeout(() => element.classList.remove('animate-bounce'), 800);
+            }
+        }
+
+        function updateZoneScores() {
+            const countKubus = document.getElementById('drop-zone-kubus').querySelectorAll('.draggable-item').length;
+            const countBalok = document.getElementById('drop-zone-balok').querySelectorAll('.draggable-item').length;
+
+            document.getElementById('score-kubus-zone').innerText = `${countKubus} / 3 Item`;
+            document.getElementById('score-balok-zone').innerText = `${countBalok} / 3 Item`;
+        }
+
+        // Touch Handlers for Mobile Devices
+        let touchItem = null;
+        function handleTouchStart(e) {
+            touchItem = this;
+            this.classList.add('dragging');
+        }
+
+        function handleTouchMove(e) {
+            if (!touchItem) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            touchItem.style.position = 'fixed';
+            touchItem.style.left = `${touch.clientX - 40}px`;
+            touchItem.style.top = `${touch.clientY - 20}px`;
+            touchItem.style.zIndex = '1000';
+        }
+
+        function handleTouchEnd(e) {
+            if (!touchItem) return;
+            touchItem.style.position = 'static';
+            touchItem.style.zIndex = 'auto';
+            touchItem.classList.remove('dragging');
+
+            const touch = e.changedTouches[0];
+            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+            const zone = dropTarget ? dropTarget.closest('.drop-target') : null;
+
+            if (zone) {
+                processDrop(touchItem, zone);
+            }
+
+            touchItem = null;
+        }
+
+
+        /* ==========================================================================
+           6. INITIALIZATION ON PAGE LOAD
+           ========================================================================== */
+        window.onload = function () {
+            // Activate default Home tab
+            switchTab('home');
+
+            // Load Quiz
+            loadQuestion();
+
+            // Load Drag and Drop Game
+            initDragDropGame();
+        };
+    </script>
+</body>
+</html>
